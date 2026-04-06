@@ -1,0 +1,71 @@
+Plano de Desenvolvimento: Sistema de Inteligência Jurídica (IA)
+
+Este plano detalha a arquitetura técnica para a extração de dados de PDFs e predição de tempo de sentença.
+
+1. Frontend: Interface do Usuário
+
+Tecnologia: React.js com TypeScript.
+
+Estilização: Tailwind CSS.
+
+UI Components: Shadcn/UI ou Radix UI para um visual profissional e "limpo".
+
+2. Backend: O Cérebro do Sistema
+
+Linguagem: Python (Mandatória para IA).
+
+Framework: FastAPI (Rápido, moderno, documentação Swagger automática).
+
+Extração de Texto: PyMuPDF (Fitz) para digitais; Tesseract OCR para escaneados.
+
+Orquestração: LangChain ou LlamaIndex.
+
+3. Banco de Dados e Armazenamento
+
+Sistema híbrido:
+
+PostgreSQL: Metadados estruturados (Número do processo, juiz, comarca, valor).
+
+Vector DB (ChromaDB ou Pinecone): Armazena os Embeddings para busca por similaridade.
+
+4. Estratégia de Inteligência Artificial
+
+Extração e Resumo: Gemini ou GPT (Rápidos e baratos para extração de entidades).
+
+Similaridade: text-embedding-3-small (OpenAI) ou multilingual-e5-large (Hugging Face) para português jurídico.
+
+Predição de Tempo: Algoritmo XGBoost ou Random Forest (Scikit-learn).
+
+5. Fluxo de Execução (Workflow)
+
+Upload: PDF enviado via React.
+
+Ingestão: FastAPI processa o arquivo.
+
+OCR/Texto: Extração do texto bruto.
+
+Metadados: IA limpa o texto e gera JSON estruturado.
+
+Busca RAG: Comparação vetorial com processos históricos.
+
+Cálculo: Modelo de regressão prevê o tempo em dias.
+
+Resposta: Dashboard exibe a previsão e casos similares.
+
+6. Regras IMPORTANTES: 
+
+Explique por que escolheu essa estrutura.
+
+No python explique sempre porque escolheu essa estrutura.
+
+Se eu pedir para corrigir um erro, primeiro me diga qual era a causa do erro antes de dar a solução."
+
+"- Sempre adicione comentários nas funções (explicando parâmetros e retorno).
+
+Use comentários de linha para explicar blocos de lógica complexos.
+
+Os comentários devem ser em português e ter um tom didático."
+
+"- Sempre utilize comentários delimitadores para blocos de lógica importantes ou seções específicas (ex: // [INÍCIO: NOME DA SEÇÃO] e // [FIM: NOME DA SEÇÃO])."
+
+"- Isso é obrigatório para validações, chamadas de API e manipulações complexas de interface."

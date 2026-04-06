@@ -1,0 +1,31 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+python-dotenv
+
+# V1: fila assíncrona (ingestão/OCR/predição em background)
+celery[redis]
+redis
+sqlalchemy
+psycopg[binary]
+numpy
+
+# RAG (Vector DB + embeddings)
+# Obs: bibliotecas de embeddings podem ser "pesadas" (ex: HuggingFace). O código trata ausência
+# de dependências/falhas com fallback gracioso para não quebrar a API.
+chromadb
+openai
+sentence-transformers
+
+# Dependências opcionais usadas apenas se disponíveis no ambiente:
+# - PyMuPDF para PDF digital (fitz)
+# - pytesseract + pdf2image + PIL para OCR
+# - (futuro) provedor de LLM e embeddings/ML
+google-generativeai
+
+# ML training (XGBoost)
+pandas
+scikit-learn
+xgboost
+joblib
