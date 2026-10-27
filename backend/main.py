@@ -7,11 +7,22 @@ import tempfile
 import time
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+except Exception:
+    # Permite executar a API também quando as variáveis já foram configuradas no ambiente.
+    pass
+
+from datajud import DataJudError, search_comparable_cases
 
 # Nota: bibliotecas opcionais (OCR/LLM/embeddings/ML) podem não estar instaladas no MVP local.
 # O endpoint deve falhar "gracioso": em vez de quebrar a API, ele retorna `null` (None) quando não
@@ -203,6 +214,12 @@ class SentencaResponse(BaseModel):
     gerado_em: datetime = Field(default_factory=datetime.utcnow)
 
 
+class DataJudSearchRequest(BaseModel):
+    tribunal: str = Field(default="api_publica_tjrr", min_length=8, max_length=32)
+    termos: str = Field(min_length=3, max_length=160)
+    limite: int = Field(default=10, ge=1, le=10)
+
+
 app = FastAPI(
     title="IA Jurídica - API",
     version="0.1.0",
@@ -220,6 +237,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Retry-After"],
 )
 # [FIM: CORS]
 
@@ -886,6 +904,20 @@ async def extract_pdf(file: UploadFile = File(...)) -> ExtractResponse:
     result = run_extract_from_pdf_bytes(pdf_bytes)
     audit_event("extract_http_finished", **safe_metadados_summary(result.metadados))
     return result
+
+
+@app.post("/api/datajud/comparaveis")
+def datajud_comparaveis(payload: DataJudSearchRequest) -> Dict[str, Any]:
+    """Busca amostras públicas por termos e resume uma duração exploratória por etapa."""
+    try:
+        return search_comparable_cases(
+            tribunal=payload.tribunal,
+            query=payload.termos,
+            limit=payload.limite,
+        )
+    except DataJudError as exc:
+        headers = {"Retry-After": str(exc.retry_after)} if exc.retry_after else None
+        raise HTTPException(status_code=exc.status_code, detail=str(exc), headers=headers) from exc
 
 
 @app.post("/api/predict", response_model=PredictResponse)

@@ -35,6 +35,46 @@ export type PredictResponse = {
   gerado_em: string;
 };
 
+export type DataJudCase = {
+  numero_processo: string | null;
+  tribunal: string | null;
+  classe: string | null;
+  assuntos: string[];
+  data_ajuizamento: string | null;
+  movimentos: { codigo: number | null; nome: string | null; data_hora: string | null }[];
+};
+
+export type DataJudSearchResponse = {
+  fonte: string;
+  tribunal_alias: string;
+  termos_busca: string;
+  consultado_em: string;
+  amostras_retornadas: number;
+  cache_hit: boolean;
+  cache_persistente: boolean;
+  estatistica_etapa: {
+    etapa: string;
+    codigo_movimento_fim: number;
+    casos_com_duracao: number;
+    processos_sem_data_de_distribuicao: number;
+    processos_sem_registro_da_etapa: number;
+    duplicatas_por_numero_processual_ignoradas: number;
+    mediana_dias: number | null;
+    p25_dias: number | null;
+    p75_dias: number | null;
+    interpretacao: string;
+  };
+  casos: DataJudCase[];
+  aviso: string;
+};
+
+export class ApiResponseError extends Error {
+  constructor(message: string, readonly status: number, readonly retryAfterSeconds?: number) {
+    super(message);
+    this.name = "ApiResponseError";
+  }
+}
+
 function apiBase(): string {
   const base = import.meta.env.VITE_API_BASE?.trim();
   if (base) {
@@ -98,4 +138,26 @@ export async function predictFromMetadados(
   }
 
   return (await res.json()) as PredictResponse;
+}
+
+export async function searchDataJudCases(input: {
+  tribunal: string;
+  termos: string;
+  limite: number;
+}): Promise<DataJudSearchResponse> {
+  const res = await fetch(`${apiBase()}/api/datajud/comparaveis`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const detail = await readErrorDetail(res);
+    const retryAfterHeader = Number(res.headers.get("Retry-After"));
+    throw new ApiResponseError(
+      detail || `Falha na consulta DataJud (${res.status}).`,
+      res.status,
+      Number.isFinite(retryAfterHeader) && retryAfterHeader > 0 ? retryAfterHeader : undefined,
+    );
+  }
+  return (await res.json()) as DataJudSearchResponse;
 }

@@ -27,6 +27,7 @@ dist/
 
 # Data / models (local)
 .chroma/
+.datajud_cache.sqlite3
 *.joblib
 *.pkl
 
